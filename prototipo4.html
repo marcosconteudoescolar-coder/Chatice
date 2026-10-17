@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SALA ÍNTEGRA — Sistema Experimental de Observação</title>
+<style>
+  :root {
+    --bg: #f4f6fa; --card: #ffffff; --text: #1f2937; --muted: #6b7280;
+    --border: #e5e7eb; --primary: #1e40af; --primary-hover: #1e3a8a;
+    --success: #047857; --warning: #b45309; --danger: #b91c1c; --info: #0369a1;
+    --radius: 10px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
+  header.app-header { background: var(--primary); color: white; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+  header.app-header h1 { margin: 0; font-size: 20px; letter-spacing: 0.5px; }
+  .header-right { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .profile-badge { background: rgba(255,255,255,0.15); padding: 4px 10px; border-radius: 999px; font-size: 13px; }
+  .sync-badge { padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+  .sync-badge.local { background: rgba(255,255,255,0.15); color: white; }
+  .sync-badge.connecting { background: #fbbf24; color: #78350f; }
+  .sync-badge.online { background: #34d399; color: #065f46; }
+  .sync-badge.offline { background: #ef4444; color: white; }
+  main { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); margin-bottom: 16px; }
+  .card h2 { margin-top: 0; font-size: 18px; }
+  .card h3 { font-size: 15px; margin-bottom: 8px; }
+  button { font: inherit; padding: 8px 14px; border-radius: 8px; border: 1px solid transparent; cursor: pointer; font-weight: 500; }
+  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
+  button.primary { background: var(--primary); color: white; }
+  button.primary:hover { background: var(--primary-hover); }
+  button.secondary { background: #eef2ff; color: var(--primary); border-color: #c7d2fe; }
+  button.secondary:hover { background: #e0e7ff; }
+  button.danger { background: var(--danger); color: white; }
+  button.danger:hover { background: #991b1b; }
+  button.ghost { background: transparent; color: var(--text); border-color: var(--border); }
+  button.ghost:hover { background: #f3f4f6; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .grid { display: grid; gap: 16px; }
+  .grid.cols-2 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+  .grid.cols-3 { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+  .profile-btn { padding: 20px; text-align: left; font-size: 16px; background: white; border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); transition: transform 0.1s, border-color 0.1s; }
+  .profile-btn:hover { border-color: var(--primary); transform: translateY(-1px); }
+  .profile-btn strong { display: block; margin-bottom: 4px; }
+  .profile-btn small { color: var(--muted); }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+  .badge.low { background: #dcfce7; color: #166534; }
+  .badge.moderate { background: #fef3c7; color: #92400e; }
+  .badge.high { background: #fee2e2; color: #991b1b; }
+  .badge.insufficient { background: #e5e7eb; color: #374151; }
+  .badge.info { background: #dbeafe; color: #1e40af; }
+  .badge.atencao { background: #fef3c7; color: #92400e; }
+  .badge.critico { background: #fee2e2; color: #991b1b; }
+  .badge.status-not_started { background: #e5e7eb; color: #374151; }
+  .badge.status-in_progress { background: #dbeafe; color: #1e40af; }
+  .badge.status-completed { background: #dcfce7; color: #166534; }
+  .progress-bar { height: 8px; background: #e5e7eb; border-radius: 999px; overflow: hidden; margin: 8px 0; }
+  .progress-bar > div { height: 100%; background: var(--primary); transition: width 0.2s; }
+  .question-text { font-size: 17px; margin: 12px 0 16px; }
+  .options label { display: block; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; cursor: pointer; }
+  .options label:hover { background: #f9fafb; }
+  .options input { margin-right: 8px; }
+  .options label:has(input:checked) { border-color: var(--primary); background: #eef2ff; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { background: #f9fafb; font-weight: 600; }
+  tbody tr:hover { background: #f9fafb; }
+  .table-wrap { overflow-x: auto; }
+  .muted { color: var(--muted); font-size: 13px; }
+  .kpi-value { font-size: 22px; font-weight: 700; }
+  .kpi-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; margin: 12px 0; }
+  .kpi-item { background: #f9fafb; padding: 8px 10px; border-radius: 8px; }
+  .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; max-width: 360px; }
+  .toast { background: #111827; color: white; padding: 10px 14px; border-radius: 8px; font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); animation: slideIn 0.2s ease; }
+  .toast.success { background: #065f46; }
+  .toast.error { background: #991b1b; }
+  @keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  .notice { background: #fef3c7; border: 1px solid #fcd34d; padding: 10px 14px; border-radius: 8px; font-size: 13px; color: #78350f; margin-bottom: 12px; }
+  .notice.danger { background: #fee2e2; border-color: #fca5a5; color: #7f1d1d; }
+  .notice.info { background: #dbeafe; border-color: #93c5fd; color: #1e3a8a; }
+  .notice.success { background: #dcfce7; border-color: #86efac; color: #166534; }
+  .criteria-card { border-left: 4px solid var(--primary); }
+  .criteria-card.insufficient { border-left-color: var(--muted); }
+  .risk-score { font-size: 30px; font-weight: 700; display: flex; align-items: baseline; gap: 6px; margin: 6px 0; }
+  .risk-score small { font-size: 13px; font-weight: 400; color: var(--muted); }
+  select, input[type="number"], input[type="text"], input[type="url"], input[type="datetime-local"], textarea { font: inherit; padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; background: white; }
+  select:focus, input:focus, textarea:focus { border-color: var(--primary); }
+  textarea { resize: vertical; min-height: 70px; font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; font-size: 12px; }
+  .filter-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: end; margin-bottom: 12px; }
+  .filter-row label { display: flex; flex-direction: column; font-size: 13px; gap: 4px; }
+  details > summary { cursor: pointer; font-weight: 600; padding: 4px 0; }
+  .formula-box { background: #f9fafb; border: 1px solid var(--border); border-radius: 8px; padding: 12px; font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; font-size: 13px; overflow-x: auto; white-space: pre-wrap; }
+  label.inline { display: flex; align-items: center; gap: 8px; font-size: 14px; margin-bottom: 8px; flex-wrap: wrap; }
+  label.inline input[type="number"] { width: 80px; }
+  .cloud-card { border-left: 4px solid var(--info); }
+  .cloud-card.online { border-left-color: var(--success); }
+  .cloud-card.connecting { border-left-color: var(--warning); }
+  .cloud-card.offline { border-left-color: var(--danger); }
+  .url-display { background: #f9fafb; border: 1px solid var(--border); border-radius: 6px; padding: 8px; font-family: ui-monospace, monospace; font-size: 12px; word-break: break-all; margin: 6px 0; }
+  @media (max-width: 640px) { main { padding: 12px; } .card { padding: 14px; } }
+</style>
+</head>
+<body>
+<div class="toast-container" id="toasts" aria-live="polite"></div>
+<header class="app-header">
+  <h1>SALA ÍNTEGRA</h1>
+  <div class="header-right">
+    <span class="sync-badge local" id="syncBadge">Local (offline)</span>
+    <span class="profile-badge" id="profileBadge">Nenhum perfil</span>
+    <button class="ghost" id="btnHome" style="color: white; border-color: rgba(255,255,255,0.4);">Trocar perfil</button>
+  </div>
+</header>
+<main id="app"></main>
+
+<script>
+(function() {
+  'use strict';
+
+  // ============================ CONSTANTES ============================
+  const STORAGE_KEY = 'sala_integra_v1';
+  const CLOUD_ROOT = 'sala_integra_v1';
+  const STUDENT_IDS = ['aluno1', 'aluno2', 'aluno3'];
+  const STUDENT_NAMES = { aluno1: 'Aluno 1', aluno2: 'Aluno 2', aluno3: 'Aluno 3', observer: 'Observador', sistema: 'Sistema' };
+  const CATEGORIES = ['sessao', 'resposta', 'navegacao', 'foco', 'copia', 'entrega', 'admin'];
+  const LEVELS = ['info', 'atencao', 'critico'];
+  const LEVEL_NAMES = { info: 'Info', atencao: 'Atenção', critico: 'Crítico' };
+  const STATUS_NAMES = { not_started: 'Não iniciada', in_progress: 'Em andamento', completed: 'Concluída' };
+  const CLASS_NAMES = { low: 'Baixo', moderate: 'Moderado', high: 'Elevado', insufficient: 'Dados insuficientes' };
+
+  const QUESTIONS = [
+    { text: 'Qual é o resultado de 7 + 5?', options: ['10', '12', '14', '16'], correct: 1 },
+    { text: 'Se todos os X são Y e todos os Y são Z, pode-se concluir que:', options: ['alguns X não são Z', 'nenhum X é Z', 'todos os X são Z', 'não é possível concluir'], correct: 2 },
+    { text: 'Qual é o próximo número da sequência: 2, 4, 8, 16, ___?', options: ['20', '24', '64', '32'], correct: 3 },
+    { text: 'Quanto é 15% de 200?', options: ['30', '20', '25', '35'], correct: 0 },
+    { text: 'Maria tem 3 maçãs a mais que João. Se João tem 5 maçãs, quantas Maria tem?', options: ['2', '8', '5', '15'], correct: 1 },
+    { text: 'Qual é o resultado de 12 × 4?', options: ['36', '44', '52', '48'], correct: 3 },
+    { text: 'Se A > B e B > C, então:', options: ['A > C', 'A < C', 'A = C', 'não se pode afirmar'], correct: 0 },
+    { text: 'A metade de um número é 18. Qual é esse número?', options: ['9', '27', '36', '54'], correct: 2 },
+    { text: 'Qual é o próximo número da sequência: 1, 1, 2, 3, 5, 8, ___?', options: ['11', '13', '12', '14'], correct: 1 },
+    { text: 'Se 3x = 27, qual é o valor de x?', options: ['3', '6', '9', '12'], correct: 2 }
+  ];
+
+  // ============================ ESTADO GLOBAL ============================
+  let state = null;
+  let eventCounter = 0;
+  let observerFilters = { student: 'all', category: 'all', level: 'all', from: '', to: '', order: 'desc' };
+  const DEVICE_ID = 'd' + Math.random().toString(36).slice(2, 10);
+
+  // Estado do módulo de sincronização
+  const cloud = {
+    enabled: false, connected: false, baseUrl: null, eventSource: null,
+    role: null, lastError: null, lastSyncAt: 0, pendingWrite: null
+  };
+
+  function defaultConfig() {
+    return {
+      weights: { similarity: 40, temporal: 20, focus: 20, copy: 15, behavior: 5 },
+      enabled: { similarity: true, temporal: true, focus: true, copy: true, behavior: true },
+      speedLimitSec: 5, focusReviewCount: 3, copyReviewCount: 3,
+      riskThresholds: { lowMax: 299, moderateMax: 599 },
+      cloudUrl: ''
+    };
+  }
+  function defaultStudent() {
+    return {
+      exam: { status: 'not_started', answers: {}, current: 0, startedAt: null, completedAt: null, questionEntryAt: null, questionTimes: {}, grade: null },
+      events: []
+    };
+  }
+  function defaultState() {
+    const s = { currentProfile: null, students: {}, systemEvents: [], config: defaultConfig() };
+    STUDENT_IDS.forEach(function(id) { s.students[id] = defaultStudent(); });
+    return s;
+  }
+
+  // ============================ PERSISTÊNCIA ============================
+  function saveState() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+    catch (e) { toast('Não foi possível salvar no navegador. Os dados podem ser perdidos ao recarregar.', 'error'); }
+    scheduleCloudWrite();
+  }
+  function loadState() {
+    try { const raw = localStorage.getItem(STORAGE_KEY); return raw ? migrateState(JSON.parse(raw)) : null; }
+    catch (e) { console.warn('Falha ao carregar estado:', e); return null; }
+  }
+  function migrateConfig(parsed) {
+    const dc = defaultConfig();
+    const c = Object.assign({}, dc, parsed || {});
+    c.weights = Object.assign({}, dc.weights, (parsed && parsed.weights) || {});
+    c.enabled = Object.assign({}, dc.enabled, (parsed && parsed.enabled) || {});
+    c.riskThresholds = Object.assign({}, dc.riskThresholds, (parsed && parsed.riskThresholds) || {});
+    return c;
+  }
+  function migrateStudent(parsed) {
+    const fresh = defaultStudent();
+    if (!parsed || typeof parsed !== 'object') return fresh;
+    fresh.exam = Object.assign({}, defaultStudent().exam, parsed.exam || {});
+    fresh.events = Array.isArray(parsed.events) ? parsed.events : [];
+    if (parsed._writer) fresh._writer = parsed._writer;
+    return fresh;
+  }
+  function migrateState(parsed) {
+    const fresh = defaultState();
+    if (!parsed || typeof parsed !== 'object') return fresh;
+    fresh.currentProfile = parsed.currentProfile || null;
+    fresh.config = migrateConfig(parsed.config);
+    fresh.systemEvents = Array.isArray(parsed.systemEvents) ? parsed.systemEvents : [];
+    STUDENT_IDS.forEach(function(id) {
+      if (parsed.students && parsed.students[id]) fresh.students[id] = migrateStudent(parsed.students[id]);
+    });
+    return fresh;
+  }
+  function syncFromStorage() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return false;
+      if (raw === JSON.stringify(state)) return false;
+      state = migrateState(JSON.parse(raw));
+      return true;
+    } catch (e) { return false; }
+  }
+
+  // ============================ CLOUD SYNC (Firebase RTDB REST + SSE) ============================
+  function normalizeFirebaseUrl(url) {
+    let u = String(url || '').trim();
+    if (!u) return null;
+    if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
+    u = u.replace(/\/+$/, '');
+    // Remover sufixo .json se o usuário colou sem querer
+    u = u.replace(/\.json$/i, '');
+    return u + '/' + CLOUD_ROOT;
+  }
+
+  function setSyncBadge(mode, text) {
+    const b = document.getElementById('syncBadge');
+    if (!b) return;
+    b.className = 'sync-badge ' + mode;
+    b.textContent = text;
+  }
+
+  function updateSyncBadge() {
+    if (!cloud.enabled) { setSyncBadge('local', 'Local (offline)'); return; }
+    if (cloud.connected) { setSyncBadge('online', 'Nuvem · conectado'); return; }
+    if (cloud.lastError) { setSyncBadge('offline', 'Nuvem · erro'); return; }
+    setSyncBadge('connecting', 'Nuvem · conectando…');
+  }
+
+  function setupCloudSync(firebaseUrl, role) {
+    disableCloudSync();
+    const base = normalizeFirebaseUrl(firebaseUrl);
+    if (!base) return;
+    cloud.enabled = true;
+    cloud.connected = false;
+    cloud.baseUrl = base;
+    cloud.role = role;
+    cloud.lastError = null;
+    updateSyncBadge();
+
+    // Pull inicial + merge com estado local
+    fetch(base + '.json')
+      .then(function(r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function(data) {
+        if (data) applyCloudSnapshot(data);
+        // Depois do pull, empurrar estado local (nossa escrita) para não perder nada
+        performCloudWrite();
+        cloud.connected = true;
+        cloud.lastSyncAt = Date.now();
+        updateSyncBadge();
+        render();
+      })
+      .catch(function(err) {
+        cloud.lastError = err.message;
+        updateSyncBadge();
+        toast('Falha ao conectar ao Firebase: ' + err.message + '. O app continua em modo local.', 'error');
+      });
+
+    // SSE
+    let es;
+    try { es = new EventSource(base + '.json?accept=text/event-stream'); }
+    catch (e) { cloud.lastError = e.message; updateSyncBadge(); return; }
+    cloud.eventSource = es;
+
+    es.addEventListener('put', function(e) {
+      try {
+        const msg = JSON.parse(e.data);
+        if (!msg.path || msg.path === '/') applyCloudSnapshot(msg.data);
+        else applyCloudPath(msg.path, msg.data);
+        cloud.connected = true; cloud.lastError = null; cloud.lastSyncAt = Date.now();
+        updateSyncBadge(); render();
+      } catch (err) { console.warn('SSE put:', err); }
+    });
+    es.addEventListener('patch', function(e) {
+      try {
+        const msg = JSON.parse(e.data);
+        if (msg.path) applyCloudPath(msg.path, msg.data);
+        cloud.connected = true; cloud.lastError = null; cloud.lastSyncAt = Date.now();
+        updateSyncBadge(); render();
+      } catch (err) { console.warn('SSE patch:', err); }
+    });
+    es.addEventListener('keep-alive', function() { cloud.connected = true; updateSyncBadge(); });
+    es.addEventListener('cancel', function() {
+      cloud.connected = false; cloud.lastError = 'Cancelado pelo servidor'; updateSyncBadge();
+    });
+    es.addEventListener('auth_revoked', function() {
+      cloud.connected = false; cloud.lastError = 'Acesso negado (regras do Firebase)'; updateSyncBadge();
+    });
+    es.onerror = function() {
+      // EventSource tenta reconectar automaticamente; apenas reportamos
+      if (cloud.enabled) { cloud.connected = false; updateSyncBadge(); }
+    };
+    es.onopen = function() { cloud.connected = true; cloud.lastError = null; updateSyncBadge(); };
+  }
+
+  function disableCloudSync() {
+    if (cloud.eventSource) { try { cloud.eventSource.close(); } catch (e) {} }
+    cloud.eventSource = null;
+    cloud.enabled = false;
+    cloud.connected = false;
+    cloud.baseUrl = null;
+    cloud.lastError = null;
+    updateSyncBadge();
+  }
+
+  function applyCloudSnapshot(data) {
+    if (!data || typeof data !== 'object') return;
+    // Config: quem não é observador não escreve, mas todos leem
+    if (data.config) state.config = migrateConfig(data.config);
+    if (data.students) {
+      STUDENT_IDS.forEach(function(id) {
+        const remote = data.students[id];
+        if (!remote) return;
+        const incoming = migrateStudent(remote);
+        if (id === cloud.role) {
+          // Nosso slot: só aceitar se escrito por outro device
+          if (incoming._writer && incoming._writer !== DEVICE_ID) {
+            state.students[id] = incoming;
+          }
+        } else {
+          state.students[id] = incoming;
+        }
+      });
+    }
+    if (Array.isArray(data.systemEvents) && cloud.role === 'observer') {
+      // Só o observador mantém systemEvents localmente agregado
+    }
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  function applyCloudPath(path, data) {
+    // path: "/students/aluno1" ou "/students/aluno1/exam/answers/0" ou "/config"
+    const parts = String(path || '').split('/').filter(Boolean);
+    if (!parts.length) return;
+    if (parts[0] === 'students' && parts[1]) {
+      const id = parts[1];
+      if (STUDENT_IDS.indexOf(id) === -1) return;
+      if (parts.length === 2) {
+        const incoming = migrateStudent(data);
+        if (id === cloud.role && incoming._writer && incoming._writer !== DEVICE_ID) {
+          state.students[id] = incoming;
+        } else if (id !== cloud.role) {
+          state.students[id] = incoming;
+        }
+      } else {
+        // Atualização parcial aninhada: só aplicamos se NÃO é nosso slot ou é reset vindo de fora
+        if (id === cloud.role) return;
+        let target = state.students[id];
+        for (let i = 1; i < parts.length - 1; i++) {
+          const k = parts[i];
+          if (!target[k] || typeof target[k] !== 'object') target[k] = {};
+          target = target[k];
+        }
+        target[parts[parts.length - 1]] = data;
+      }
+    } else if (parts[0] === 'config' && parts.length === 1) {
+      if (cloud.role !== 'observer') state.config = migrateConfig(data);
+    }
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  function scheduleCloudWrite() {
+    if (!cloud.enabled) return;
+    if (cloud.pendingWrite) clearTimeout(cloud.pendingWrite);
+    cloud.pendingWrite = setTimeout(function() {
+      cloud.pendingWrite = null;
+      performCloudWrite();
+    }, 400);
+  }
+
+  function performCloudWrite() {
+    if (!cloud.enabled || !cloud.baseUrl) return;
+    const role = cloud.role;
+    if (!role) return;
+    const url = cloud.baseUrl + '.json';
+    const payload = {};
+    if (STUDENT_IDS.indexOf(role) !== -1) {
+      // Só escrevemos nosso próprio slot
+      const st = state.students[role];
+      st._writer = DEVICE_ID;
+      payload['students/' + role] = st;
+    } else if (role === 'observer') {
+      payload['config'] = state.config;
+    }
+    if (!Object.keys(payload).length) return;
+    // PATCH para não sobrescrever o slot dos outros
+    fetch(url, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).then(function(r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      cloud.connected = true; cloud.lastError = null; cloud.lastSyncAt = Date.now();
+      updateSyncBadge();
+    }).catch(function(err) {
+      cloud.lastError = err.message;
+      updateSyncBadge();
+    });
+  }
+
+  // ============================ UTILITÁRIOS ============================
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function stamp() {
+    const d = new Date(); const p = function(n) { return String(n).padStart(2, '0'); };
+    return d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '_' + p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds());
+  }
+  function toast(msg, type) {
+    const container = document.getElementById('toasts'); if (!container) return;
+    const el = document.createElement('div');
+    el.className = 'toast' + (type ? ' ' + type : '');
+    el.textContent = msg;
+    container.appendChild(el);
+    setTimeout(function() { el.style.opacity = '0'; el.style.transition = 'opacity 0.3s'; setTimeout(function() { el.remove(); }, 320); }, 3800);
+  }
+  function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click();
+    setTimeout(function() { URL.revokeObjectURL(url); a.remove(); }, 800);
+  }
+  function formatDateTime(ms) { if (!ms) return '—'; try { return new Date(ms).toLocaleString('pt-BR'); } catch (e) { return '—'; } }
+  function isTypingInForm() {
+    const ae = document.activeElement; if (!ae) return false;
+    return ['INPUT', 'TEXTAREA', 'SELECT'].indexOf(ae.tagName) !== -1;
+  }
+
+  // ============================ EVENTOS ============================
+  function logEvent(studentId, category, description, level) {
+    const event = { id: 'e' + Date.now() + '_' + (eventCounter++), at: Date.now(), student: studentId, category: category, description: description, level: level || 'info' };
+    if (studentId === 'sistema') state.systemEvents.push(event);
+    else if (state.students[studentId]) state.students[studentId].events.push(event);
+    saveState();
+    return event;
+  }
+  function allEvents() {
+    const evs = [];
+    STUDENT_IDS.forEach(function(id) { state.students[id].events.forEach(function(e) { evs.push(e); }); });
+    state.systemEvents.forEach(function(e) { evs.push(e); });
+    return evs;
+  }
+
+  // ============================ PROVA ============================
+  function startExam(studentId) {
+    const st = state.students[studentId];
+    if (!st || st.exam.status !== 'not_started') return;
+    st.exam.status = 'in_progress';
+    st.exam.startedAt = Date.now();
+    st.exam.current = 0;
+    st.exam.questionEntryAt = Date.now();
+    st.exam.answers = {};
+    st.exam.questionTimes = {};
+    st.exam.completedAt = null;
+    st.exam.grade = null;
+    logEvent(studentId, 'sessao', 'Prova iniciada.', 'info');
+    render();
+  }
+  function selectAnswer(studentId, qIndex, optionIndex) {
+    const st = state.students[studentId];
+    if (!st || st.exam.status !== 'in_progress') return;
+    const prev = st.exam.answers[qIndex];
+    st.exam.answers[qIndex] = optionIndex;
+    const letter = ['A', 'B', 'C', 'D'][optionIndex];
+    if (prev === undefined) logEvent(studentId, 'resposta', 'Questão ' + (qIndex + 1) + ': alternativa ' + letter + ' selecionada.', 'info');
+    else if (prev !== optionIndex) logEvent(studentId, 'resposta', 'Questão ' + (qIndex + 1) + ': alternativa alterada de ' + ['A', 'B', 'C', 'D'][prev] + ' para ' + letter + '.', 'info');
+    const answered = Object.keys(st.exam.answers).length;
+    const pct = Math.round(100 * answered / QUESTIONS.length);
+    const progBar = document.querySelector('.progress-bar > div'); if (progBar) progBar.style.width = pct + '%';
+    const al = document.getElementById('answeredLabel'); if (al) al.textContent = 'Respondidas: ' + answered + '/' + QUESTIONS.length;
+    const pl = document.getElementById('progressLabel'); if (pl) pl.textContent = 'Progresso: ' + pct + '% (' + answered + ' de ' + QUESTIONS.length + ' respondidas)';
+  }
+  function goToQuestion(studentId, newIndex) {
+    const st = state.students[studentId];
+    if (!st || st.exam.status !== 'in_progress') return;
+    if (newIndex < 0 || newIndex >= QUESTIONS.length || newIndex === st.exam.current) return;
+    const now = Date.now();
+    if (st.exam.questionEntryAt) {
+      const elapsed = (now - st.exam.questionEntryAt) / 1000;
+      st.exam.questionTimes[st.exam.current] = (st.exam.questionTimes[st.exam.current] || 0) + elapsed;
+    }
+    st.exam.current = newIndex;
+    st.exam.questionEntryAt = now;
+    logEvent(studentId, 'navegacao', 'Mudança para questão ' + (newIndex + 1) + '.', 'info');
+    render();
+  }
+  function submitExam(studentId) {
+    const st = state.students[studentId];
+    if (!st || st.exam.status !== 'in_progress') return;
+    const now = Date.now();
+    if (st.exam.questionEntryAt) {
+      const elapsed = (now - st.exam.questionEntryAt) / 1000;
+      st.exam.questionTimes[st.exam.current] = (st.exam.questionTimes[st.exam.current] || 0) + elapsed;
+    }
+    let correct = 0;
+    for (let i = 0; i < QUESTIONS.length; i++) if (st.exam.answers[i] === QUESTIONS[i].correct) correct++;
+    st.exam.grade = correct;
+    st.exam.status = 'completed';
+    st.exam.completedAt = now;
+    logEvent(studentId, 'entrega', 'Prova entregue. Acertos: ' + correct + '/' + QUESTIONS.length + '.', 'info');
+    render();
+  }
+  function switchProfile(profileId) {
+    const prev = state.currentProfile;
+    if (prev === profileId) return;
+    if (prev && STUDENT_IDS.indexOf(prev) !== -1) {
+      const ex = state.students[prev].exam;
+      if (ex.status === 'in_progress' && ex.questionEntryAt) {
+        const elapsed = (Date.now() - ex.questionEntryAt) / 1000;
+        ex.questionTimes[ex.current] = (ex.questionTimes[ex.current] || 0) + elapsed;
+        ex.questionEntryAt = null;
+      }
+    }
+    state.currentProfile = profileId;
+    if (profileId && STUDENT_IDS.indexOf(profileId) !== -1) {
+      const ex = state.students[profileId].exam;
+      if (ex.status === 'in_progress') ex.questionEntryAt = Date.now();
+    }
+    saveState();
+    // Reconfigurar cloud com novo papel
+    if (cloud.enabled && state.config.cloudUrl) {
+      setupCloudSync(state.config.cloudUrl, profileId);
+    }
+    logEvent('sistema', 'sessao', 'Perfil ativo: ' + (profileId ? (STUDENT_NAMES[profileId] || profileId) : 'nenhum') + '.', 'info');
+    render();
+  }
+  function resetStudent(studentId) {
+    state.students[studentId] = defaultStudent();
+    if (cloud.enabled && cloud.role === 'observer') {
+      // Escrever reset no slot do aluno com nosso _writer, para que o device dele aplique
+      state.students[studentId]._writer = DEVICE_ID;
+      fetch(cloud.baseUrl + '/students/' + studentId + '.json', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(state.students[studentId])
+      }).catch(function() {});
+    }
+    logEvent(studentId, 'admin', 'Prova reiniciada pelo observador.', 'info');
+    render();
+  }
+
+  // ============================ RISCO ============================
+  function classify(score, th) {
+    if (score === null || score === undefined) return 'insufficient';
+    if (score <= th.lowMax) return 'low';
+    if (score <= th.moderateMax) return 'moderate';
+    return 'high';
+  }
+  function computeSimilarity(studentId) {
+    const cfg = state.config, st = state.students[studentId];
+    const answers = st.exam.answers;
+    const answeredQ = Object.keys(answers).map(Number);
+    let best = null;
+    STUDENT_IDS.forEach(function(otherId) {
+      if (otherId === studentId) return;
+      const other = state.students[otherId].exam.answers;
+      const common = answeredQ.filter(function(q) { return other[q] !== undefined; });
+      if (common.length < 3) return;
+      let matches = 0; common.forEach(function(q) { if (answers[q] === other[q]) matches++; });
+      const sim = matches / common.length;
+      if (!best || common.length > best.sampleSize || (common.length === best.sampleSize && sim > best.sim))
+        best = { otherId: otherId, sampleSize: common.length, matches: matches, sim: sim };
+    });
+    if (!best) return { key: 'similarity', name: 'Semelhança de respostas', enabled: true, weight: cfg.weights.similarity, hasData: false, rawScore: 0, evidence: 'Amostra insuficiente (mínimo 3 questões respondidas por ambos).', limitations: 'Semelhança pode ocorrer por estudo conjunto ou coincidência.' };
+    const raw = Math.max(0, (best.sim - 0.25) / 0.75);
+    return { key: 'similarity', name: 'Semelhança de respostas', enabled: true, weight: cfg.weights.similarity, hasData: true, rawScore: Math.min(1, raw), evidence: 'Comparação com ' + STUDENT_NAMES[best.otherId] + ': ' + best.matches + '/' + best.sampleSize + ' (' + Math.round(best.sim * 100) + '%).', limitations: 'Coincidência esperada ao acaso é ~25%.' };
+  }
+  function computeTemporal(studentId) {
+    const cfg = state.config, st = state.students[studentId];
+    const times = st.exam.questionTimes || {};
+    const answeredQ = Object.keys(st.exam.answers).map(Number);
+    let valid = 0, fast = 0, totalTime = 0;
+    answeredQ.forEach(function(q) {
+      const t = times[q];
+      if (typeof t === 'number' && isFinite(t) && t >= 0 && t <= 3600) { valid++; totalTime += t; if (t < cfg.speedLimitSec) fast++; }
+    });
+    if (valid < 3) return { key: 'temporal', name: 'Anomalias temporais', enabled: true, weight: cfg.weights.temporal, hasData: false, rawScore: 0, evidence: 'Amostra insuficiente (' + valid + ' questão(ões) com tempo válido).', limitations: 'Tempos inválidos são ignorados.' };
+    const ratio = fast / valid; const avg = (totalTime / valid).toFixed(1);
+    return { key: 'temporal', name: 'Anomalias temporais', enabled: true, weight: cfg.weights.temporal, hasData: true, rawScore: Math.min(1, ratio), evidence: fast + '/' + valid + ' questões em menos de ' + cfg.speedLimitSec + 's. Média: ' + avg + 's.', limitations: 'Rapidez não é prova de cola.' };
+  }
+  function computeFocus(studentId) {
+    const cfg = state.config, st = state.students[studentId];
+    if (st.exam.status === 'not_started') return { key: 'focus', name: 'Eventos de foco/visibilidade', enabled: true, weight: cfg.weights.focus, hasData: false, rawScore: 0, evidence: 'Prova não iniciada.', limitations: '' };
+    const count = st.events.filter(function(e) { return e.category === 'foco'; }).length;
+    const threshold = Math.max(1, cfg.focusReviewCount || 3);
+    return { key: 'focus', name: 'Eventos de foco/visibilidade', enabled: true, weight: cfg.weights.focus, hasData: true, rawScore: Math.min(1, count / threshold), evidence: count + ' evento(s). Limite de revisão: ' + threshold + '.', limitations: 'Motivo da perda de foco não é detectável.' };
+  }
+  function computeCopy(studentId) {
+    const cfg = state.config, st = state.students[studentId];
+    if (st.exam.status === 'not_started') return { key: 'copy', name: 'Eventos de copiar/colar', enabled: true, weight: cfg.weights.copy, hasData: false, rawScore: 0, evidence: 'Prova não iniciada.', limitations: '' };
+    const count = st.events.filter(function(e) { return e.category === 'copia'; }).length;
+    const threshold = Math.max(1, cfg.copyReviewCount || 3);
+    return { key: 'copy', name: 'Eventos de copiar/colar', enabled: true, weight: cfg.weights.copy, hasData: true, rawScore: Math.min(1, count / threshold), evidence: count + ' evento(s). Referência: ' + threshold + '.', limitations: 'Nem toda cópia é detectável.' };
+  }
+  function computeBehavior(studentId) {
+    const cfg = state.config, st = state.students[studentId];
+    if (st.exam.status === 'not_started') return { key: 'behavior', name: 'Padrões comportamentais', enabled: true, weight: cfg.weights.behavior, hasData: false, rawScore: 0, evidence: 'Prova não iniciada.', limitations: '' };
+    if (st.events.length < 8) return { key: 'behavior', name: 'Padrões comportamentais', enabled: true, weight: cfg.weights.behavior, hasData: false, rawScore: 0, evidence: 'Amostra insuficiente (' + st.events.length + ' eventos; mínimo 8).', limitations: '' };
+    const relevant = st.events.filter(function(e) { return e.category === 'foco' || e.category === 'copia'; });
+    const times = relevant.map(function(e) { return e.at; }).sort(function(a, b) { return a - b; });
+    let maxBurst = 0;
+    for (let i = 0; i < times.length; i++) { let c = 0; for (let j = i; j < times.length && times[j] - times[i] <= 60000; j++) c++; if (c > maxBurst) maxBurst = c; }
+    const raw = maxBurst >= 4 ? Math.min(1, (maxBurst - 3) / 5) : 0;
+    return { key: 'behavior', name: 'Padrões comportamentais', enabled: true, weight: cfg.weights.behavior, hasData: true, rawScore: raw, evidence: 'Pico: ' + maxBurst + ' evento(s) em 60s.', limitations: 'Concentração pode ser coincidência.' };
+  }
+  function computeRisk(studentId) {
+    const cfg = state.config;
+    const crit = [
+      cfg.enabled.similarity ? computeSimilarity(studentId) : { key: 'similarity', name: 'Semelhança de respostas', enabled: false, weight: cfg.weights.similarity, hasData: false, rawScore: 0, evidence: 'Desativado.', limitations: '' },
+      cfg.enabled.temporal ? computeTemporal(studentId) : { key: 'temporal', name: 'Anomalias temporais', enabled: false, weight: cfg.weights.temporal, hasData: false, rawScore: 0, evidence: 'Desativado.', limitations: '' },
+      cfg.enabled.focus ? computeFocus(studentId) : { key: 'focus', name: 'Eventos de foco/visibilidade', enabled: false, weight: cfg.weights.focus, hasData: false, rawScore: 0, evidence: 'Desativado.', limitations: '' },
+      cfg.enabled.copy ? computeCopy(studentId) : { key: 'copy', name: 'Eventos de copiar/colar', enabled: false, weight: cfg.weights.copy, hasData: false, rawScore: 0, evidence: 'Desativado.', limitations: '' },
+      cfg.enabled.behavior ? computeBehavior(studentId) : { key: 'behavior', name: 'Padrões comportamentais', enabled: false, weight: cfg.weights.behavior, hasData: false, rawScore: 0, evidence: 'Desativado.', limitations: '' }
+    ];
+    crit.forEach(function(c) { if (typeof c.contribution !== 'number') c.contribution = 0; });
+    const active = crit.filter(function(c) { return c.enabled && c.hasData; });
+    if (active.length === 0) return { score: null, classification: 'insufficient', criteria: crit, sampleInsufficient: true, note: 'Dados insuficientes.' };
+    const totalW = active.reduce(function(s, c) { return s + (Number(c.weight) || 0); }, 0);
+    let score = 0;
+    if (totalW > 0) {
+      const weighted = active.reduce(function(s, c) { return s + (Number(c.weight) || 0) * c.rawScore; }, 0);
+      score = Math.round(1000 * weighted / totalW);
+      if (!isFinite(score) || isNaN(score)) score = 0;
+    }
+    score = Math.max(0, Math.min(1000, score));
+    crit.forEach(function(c) { c.contribution = (totalW > 0 && c.enabled && c.hasData) ? Math.round(1000 * (Number(c.weight) || 0) * c.rawScore / totalW) : 0; });
+    return { score: score, classification: classify(score, cfg.riskThresholds), criteria: crit, sampleInsufficient: active.length < 3, note: totalW === 0 ? 'Todos os pesos ativos são zero.' : null };
+  }
+
+  // ============================ RENDER — SELEÇÃO ============================
+  function renderProfileSelect() {
+    const cloudInfo = cloud.enabled
+      ? '<div class="notice success"><strong>Modo nuvem ativo:</strong> ' + (cloud.connected ? 'conectado ao Firebase. Os dados deste dispositivo serão sincronizados automaticamente com os outros.' : 'aguardando conexão com o Firebase…') + '</div>'
+      : '<div class="notice info"><strong>Modo local:</strong> os dados ficam apenas neste dispositivo. Para sincronizar automaticamente entre celulares, o observador deve configurar a nuvem na seção “Sincronização”.</div>';
+    return cloudInfo +
+      '<div class="card"><h2>Selecione um perfil</h2>' +
+        '<p class="muted">A troca de perfil preserva os dados desta sessão. Nenhum dado pessoal é coletado.</p>' +
+        '<div class="grid cols-2" style="margin-top:12px;">' +
+          STUDENT_IDS.map(function(id) { return '<button class="profile-btn" data-profile="' + id + '"><strong>' + STUDENT_NAMES[id] + '</strong><small>Realizar a prova (10 questões objetivas)</small></button>'; }).join('') +
+          '<button class="profile-btn" data-profile="observer"><strong>Observador</strong><small>Painel administrativo e acompanhamento</small></button></div></div>' +
+      renderCloudSetupCard() +
+      '<div class="notice"><strong>Privacidade:</strong> sem nuvem, os dados ficam no navegador e podem ser perdidos se o armazenamento for apagado. Com nuvem ativa, os dados passam pelo Firebase (Google). Sinais como perda de foco e rapidez são ambíguos e não constituem prova de cola.</div>';
+  }
+
+  // ============================ RENDER — CONFIG NUVEM ============================
+  function renderCloudSetupCard() {
+    const statusClass = cloud.enabled ? (cloud.connected ? 'online' : (cloud.lastError ? 'offline' : 'connecting')) : '';
+    const statusText = cloud.enabled
+      ? (cloud.connected ? '✅ Conectado' : (cloud.lastError ? '❌ ' + escapeHtml(cloud.lastError) : '⏳ Conectando…'))
+      : '⚪ Modo local (offline)';
+    const role = state.currentProfile || 'observer';
+    let shareLinks = '';
+    if (cloud.enabled && state.config.cloudUrl) {
+      const fileUrl = location.href.split('?')[0].split('#')[0];
+      shareLinks = '<h3 style="margin-top:14px;">Links prontos para os alunos</h3>' +
+        '<p class="muted">Envie a cada aluno o link correspondente. O app já abre configurado.</p>' +
+        STUDENT_IDS.map(function(id) {
+          const link = fileUrl + '?cloud=' + encodeURIComponent(state.config.cloudUrl) + '&role=' + id;
+          return '<div style="margin-bottom:6px;"><strong>' + STUDENT_NAMES[id] + ':</strong>' +
+            '<div class="url-display">' + escapeHtml(link) + '</div>' +
+            '<button class="ghost" data-copy-link="' + escapeHtml(link) + '">Copiar link</button></div>';
+        }).join('');
+    }
+    return '<div class="card cloud-card ' + statusClass + '"><h2>☁ Sincronização entre dispositivos</h2>' +
+      '<p class="muted">O modo nuvem usa um banco gratuito do Firebase (Google) via REST+SSE nativo do navegador. Sem bibliotecas externas. Sem nuvem, o app funciona offline.</p>' +
+      '<p><strong>Status:</strong> ' + statusText + '</p>' +
+      '<label class="inline" style="display:block;">URL do banco Firebase (Realtime Database):</label>' +
+      '<input type="url" id="cloudUrlInput" placeholder="https://SEU-PROJETO-default-rtdb.firebaseio.com" value="' + escapeHtml(state.config.cloudUrl || '') + '" style="width:100%;margin-bottom:8px;">' +
+      '<div class="row">' +
+        '<button class="primary" id="btnCloudConnect">Conectar / Salvar</button>' +
+        '<button class="ghost" id="btnCloudDisconnect"' + (cloud.enabled ? '' : ' disabled') + '>Desconectar (modo local)</button>' +
+        '<button class="secondary" id="btnCloudTest">Testar conexão</button></div>' +
+      '<details style="margin-top:12px;"><summary>Como criar o banco no Firebase (passo a passo)</summary>' +
+        '<ol style="font-size:13px;line-height:1.7;padding-left:20px;">' +
+          '<li>Acesse <strong>console.firebase.google.com</strong> e crie um projeto (gratuito).</li>' +
+          '<li>No menu, vá em <strong>Build → Realtime Database → Criar banco</strong>. Escolha o modo <em>teste</em> (regras abertas).</li>' +
+          '<li>Copie a URL exibida no topo (algo como <code>https://xxx-default-rtdb.firebaseio.com</code>).</li>' +
+          '<li>Cole essa URL no campo acima e clique em <strong>Conectar / Salvar</strong>.</li>' +
+          '<li>Envie aos alunos os <strong>links prontos</strong> que aparecerão abaixo.</li>' +
+        '</ol>' +
+        '<p class="notice danger" style="margin-top:8px;"><strong>Atenção:</strong> as regras em modo teste expiram em 30 dias e ficam abertas (qualquer um com a URL pode ler e escrever). Para uso real, ative Firebase Auth. Não use dados pessoais reais neste experimento.</p>' +
+      '</details>' + shareLinks + '</div>';
+  }
+
+  // ============================ RENDER — ALUNO ============================
+  function renderStudent(studentId) {
+    const st = state.students[studentId];
+    const exam = st.exam;
+    let main;
+    if (exam.status === 'not_started') {
+      main = '<div class="card"><h2>' + STUDENT_NAMES[studentId] + ' — Prova</h2>' +
+          '<p>Você ainda não iniciou a prova. Ao iniciar, o tempo começará a ser registrado.</p>' +
+          '<p class="muted">' + QUESTIONS.length + ' questões objetivas, 4 alternativas cada.</p>' +
+          '<button class="primary" id="btnStartExam">Iniciar prova</button></div>';
+    } else if (exam.status === 'in_progress') {
+      const q = QUESTIONS[exam.current];
+      const answered = Object.keys(exam.answers).length;
+      const pct = Math.round(100 * answered / QUESTIONS.length);
+      const letters = ['A', 'B', 'C', 'D'];
+      main = '<div class="card"><h2>' + STUDENT_NAMES[studentId] + ' — Prova em andamento</h2>' +
+          '<div class="row" style="justify-content:space-between;">' +
+            '<span class="muted">Questão ' + (exam.current + 1) + ' de ' + QUESTIONS.length + '</span>' +
+            '<span class="muted" id="answeredLabel">Respondidas: ' + answered + '/' + QUESTIONS.length + '</span></div>' +
+          '<div class="progress-bar"><div style="width:' + pct + '%"></div></div>' +
+          '<div class="question-text"><strong>' + (exam.current + 1) + '.</strong> ' + q.text + '</div>' +
+          '<div class="options" role="radiogroup" aria-label="Alternativas da questão ' + (exam.current + 1) + '">' +
+            q.options.map(function(opt, i) {
+              const checked = exam.answers[exam.current] === i ? ' checked' : '';
+              return '<label><input type="radio" name="answer" value="' + i + '"' + checked + '> <span>' + letters[i] + ') ' + opt + '</span></label>';
+            }).join('') + '</div>' +
+          '<div class="row" style="margin-top:12px;">' +
+            '<button class="ghost" id="btnPrev"' + (exam.current === 0 ? ' disabled' : '') + '>← Anterior</button>' +
+            (exam.current < QUESTIONS.length - 1 ? '<button class="primary" id="btnNext">Próxima →</button>' : '') +
+            '<button class="secondary" id="btnSubmit">Finalizar prova</button></div>' +
+          '<p class="muted" style="margin-top:12px;" id="progressLabel">Progresso: ' + pct + '% (' + answered + ' de ' + QUESTIONS.length + ')</p></div>';
+    } else {
+      const grade = exam.grade;
+      const pctGrade = ((grade / QUESTIONS.length) * 100).toFixed(0);
+      main = '<div class="card"><h2>' + STUDENT_NAMES[studentId] + ' — Prova concluída</h2>' +
+          '<div class="kpi-grid">' +
+            '<div class="kpi-item"><div class="kpi-value">' + grade + '/' + QUESTIONS.length + '</div><div class="kpi-label">Acertos</div></div>' +
+            '<div class="kpi-item"><div class="kpi-value">' + pctGrade + '%</div><div class="kpi-label">Aproveitamento</div></div>' +
+            '<div class="kpi-item"><div class="kpi-value" style="font-size:14px">' + formatDateTime(exam.completedAt) + '</div><div class="kpi-label">Entregue em</div></div></div>' +
+          '<p class="muted">As respostas não podem mais ser alteradas.</p></div>';
+    }
+
+    const handoff = (cloud.enabled && cloud.connected)
+      ? ''
+      : (exam.status !== 'not_started' ? '<div class="card" style="border-left:4px solid var(--info);">' +
+          '<h2>📤 Envio manual (modo local)</h2>' +
+          '<p class="muted">Sem nuvem configurada, envie manualmente o resultado ao observador.</p>' +
+          '<div class="row"><button class="primary" id="btnDownload">Baixar arquivo</button></div></div>' : '');
+
+    return main + handoff + renderCloudSetupCard();
+  }
+
+  function bindStudent(studentId) {
+    const st = state.students[studentId];
+    const b = document.getElementById('btnStartExam'); if (b) b.addEventListener('click', function() { startExam(studentId); });
+    const prev = document.getElementById('btnPrev'); if (prev) prev.addEventListener('click', function() { goToQuestion(studentId, st.exam.current - 1); });
+    const next = document.getElementById('btnNext'); if (next) next.addEventListener('click', function() { goToQuestion(studentId, st.exam.current + 1); });
+    const sub = document.getElementById('btnSubmit'); if (sub) sub.addEventListener('click', function() {
+      const answered = Object.keys(st.exam.answers).length;
+      const msg = answered < QUESTIONS.length ? 'Você respondeu ' + answered + ' de ' + QUESTIONS.length + '. Finalizar mesmo assim?' : 'Finalizar a prova?';
+      if (confirm(msg)) submitExam(studentId);
+    });
+    document.querySelectorAll('input[name="answer"]').forEach(function(inp) {
+      inp.addEventListener('change', function() {
+        const v = parseInt(inp.value, 10);
+        if (!isNaN(v)) selectAnswer(studentId, st.exam.current, v);
+      });
+    });
+    const dl = document.getElementById('btnDownload');
+    if (dl) dl.addEventListener('click', function() { exportStudentFile(studentId); });
+    bindCloudSetup();
+  }
+
+  function exportStudentFile(studentId) {
+    try {
+      const st = state.students[studentId];
+      const payload = { app: 'SALA_INTEGRA_RESULT', version: 1, exportedAt: new Date().toISOString(), studentId: studentId, exam: st.exam, events: st.events };
+      downloadBlob(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }), 'sala_integra_' + studentId + '_' + stamp() + '.json');
+      toast('Arquivo baixado.', 'success');
+    } catch (e) { toast('Falha: ' + e.message, 'error'); }
+  }
+
+  // ============================ RENDER — OBSERVADOR ============================
+  function renderObserver() {
+    return renderCloudSetupCard() +
+      '<div class="card"><h2>Painel do Observador</h2>' +
+        '<p class="muted">Indicadores <strong>experimentais</strong>. Não constituem prova de irregularidade. Use “indicadores para revisão”.</p>' +
+        (cloud.enabled && cloud.connected ? '<p class="muted" style="color:var(--success);">🔄 Sincronização automática ativa — os dados dos alunos aparecem aqui em tempo real.</p>' : '') +
+      '</div>' +
+      '<div class="grid cols-3">' + STUDENT_IDS.map(renderStudentCard).join('') + '</div>' +
+      renderEventTable() + renderRiskDetails() + renderComparison() + renderConfig() + renderAdmin();
+  }
+
+  function renderStudentCard(id) {
+    const st = state.students[id];
+    const exam = st.exam;
+    const risk = computeRisk(id);
+    const answered = Object.keys(exam.answers).length;
+    const progress = Math.round(100 * answered / QUESTIONS.length);
+    const eventCount = st.events.length;
+    const reviewCount = st.events.filter(function(e) { return e.level === 'atencao' || e.level === 'critico'; }).length;
+    let elapsed = '—';
+    if (exam.startedAt) {
+      const end = exam.completedAt || Date.now();
+      const sec = Math.max(0, Math.floor((end - exam.startedAt) / 1000));
+      elapsed = Math.floor(sec / 60) + 'm ' + (sec % 60) + 's';
+    }
+    const scoreText = risk.score === null ? '—' : String(risk.score);
+    const gradeText = exam.status === 'completed' ? (exam.grade + '/' + QUESTIONS.length) : '—';
+    const extraNote = risk.note ? '<p class="muted" style="margin:6px 0 0">' + escapeHtml(risk.note) + '</p>' : '';
+    return '<div class="card" style="margin:0;"><h3>' + STUDENT_NAMES[id] + '</h3>' +
+      '<div class="row"><span class="badge status-' + exam.status + '">' + STATUS_NAMES[exam.status] + '</span></div>' +
+      '<div class="kpi-grid">' +
+        '<div class="kpi-item"><div class="kpi-value">' + progress + '%</div><div class="kpi-label">Progresso</div></div>' +
+        '<div class="kpi-item"><div class="kpi-value">' + gradeText + '</div><div class="kpi-label">Nota</div></div>' +
+        '<div class="kpi-item"><div class="kpi-value" style="font-size:14px">' + elapsed + '</div><div class="kpi-label">Tempo</div></div>' +
+        '<div class="kpi-item"><div class="kpi-value">' + eventCount + '</div><div class="kpi-label">Eventos</div></div>' +
+        '<div class="kpi-item"><div class="kpi-value">' + reviewCount + '</div><div class="kpi-label">Para revisão</div></div></div>' +
+      '<div class="risk-score">' + scoreText + (risk.score === null ? '' : '<small>/1000</small>') + '</div>' +
+      '<span class="badge ' + risk.classification + '">' + CLASS_NAMES[risk.classification] + '</span>' + extraNote + '</div>';
+  }
+
+  function renderEventTable() {
+    const events = allEvents();
+    const f = observerFilters;
+    let filtered = events.slice();
+    if (f.student !== 'all') filtered = filtered.filter(function(e) { return e.student === f.student; });
+    if (f.category !== 'all') filtered = filtered.filter(function(e) { return e.category === f.category; });
+    if (f.level !== 'all') filtered = filtered.filter(function(e) { return e.level === f.level; });
+    if (f.from) { const from = new Date(f.from).getTime(); if (!isNaN(from)) filtered = filtered.filter(function(e) { return e.at >= from; }); }
+    if (f.to) { const to = new Date(f.to).getTime(); if (!isNaN(to)) filtered = filtered.filter(function(e) { return e.at <= to; }); }
+    filtered.sort(function(a, b) { return f.order === 'desc' ? b.at - a.at : a.at - b.at; });
+    const studentOptions = [{ v: 'all', l: 'Todos' }].concat(STUDENT_IDS.map(function(id) { return { v: id, l: STUDENT_NAMES[id] }; }), [{ v: 'sistema', l: 'Sistema' }]);
+    const rows = filtered.length === 0 ? '<tr><td colspan="5"><em>Nenhum evento com os filtros atuais.</em></td></tr>' :
+      filtered.map(function(e) {
+        const who = e.student === 'sistema' ? 'Sistema' : (STUDENT_NAMES[e.student] || e.student);
+        return '<tr><td>' + formatDateTime(e.at) + '</td><td>' + escapeHtml(who) + '</td><td>' + escapeHtml(e.category) + '</td>' +
+          '<td><span class="badge ' + e.level + '">' + (LEVEL_NAMES[e.level] || e.level) + '</span></td><td>' + escapeHtml(e.description) + '</td></tr>';
+      }).join('');
+    return '<div class="card"><h2>Registro de eventos</h2><div class="filter-row">' +
+        '<label>Aluno<select id="filterStudent">' + studentOptions.map(function(o) { return '<option value="' + o.v + '"' + (f.student === o.v ? ' selected' : '') + '>' + o.l + '</option>'; }).join('') + '</select></label>' +
+        '<label>Categoria<select id="filterCategory"><option value="all"' + (f.category === 'all' ? ' selected' : '') + '>Todas</option>' + CATEGORIES.map(function(c) { return '<option value="' + c + '"' + (f.category === c ? ' selected' : '') + '>' + c + '</option>'; }).join('') + '</select></label>' +
+        '<label>Relevância<select id="filterLevel"><option value="all"' + (f.level === 'all' ? ' selected' : '') + '>Todas</option>' + LEVELS.map(function(l) { return '<option value="' + l + '"' + (f.level === l ? ' selected' : '') + '>' + (LEVEL_NAMES[l] || l) + '</option>'; }).join('') + '</select></label>' +
+        '<label>De<input type="datetime-local" id="filterFrom" value="' + escapeHtml(f.from || '') + '"></label>' +
+        '<label>Até<input type="datetime-local" id="filterTo" value="' + escapeHtml(f.to || '') + '"></label>' +
+        '<label>Ordem<select id="filterOrder"><option value="desc"' + (f.order === 'desc' ? ' selected' : '') + '>Mais recentes primeiro</option><option value="asc"' + (f.order === 'asc' ? ' selected' : '') + '>Mais antigos primeiro</option></select></label></div>' +
+      '<p class="muted">' + filtered.length + ' evento(s) exibido(s).</p>' +
+      '<div class="table-wrap"><table><thead><tr><th>Horário</th><th>Aluno</th><th>Categoria</th><th>Relevância</th><th>Descrição</th></tr></thead><tbody>' + rows + '</tbody></table></div></div>';
+  }
+
+  function renderRiskDetails() {
+    const cfg = state.config;
+    const details = STUDENT_IDS.map(function(id) {
+      const risk = computeRisk(id);
+      const scoreLabel = risk.score === null ? 'sem pontuação' : (risk.score + '/1000');
+      const criteriaHtml = risk.criteria.map(function(c) {
+        const status = c.enabled ? (c.hasData ? 'Contribuição: ' + (c.contribution || 0) : 'Dados insuficientes') : 'Desativado';
+        return '<div class="card criteria-card' + (c.hasData && c.enabled ? '' : ' insufficient') + '" style="margin:0;">' +
+          '<h3>' + escapeHtml(c.name) + '</h3>' +
+          '<p class="muted">Peso: ' + c.weight + ' · ' + status + '</p>' +
+          '<p><strong>Evidências:</strong> ' + escapeHtml(c.evidence) + '</p>' +
+          '<p class="muted"><strong>Limitações:</strong> ' + escapeHtml(c.limitations || '—') + '</p></div>';
+      }).join('');
+      return '<details style="margin-top:12px;"><summary>' + STUDENT_NAMES[id] + ' — ' + scoreLabel + ' (' + CLASS_NAMES[risk.classification] + ')</summary>' +
+        '<div class="grid cols-2" style="margin-top:12px;">' + criteriaHtml + '</div></details>';
+    }).join('');
+    return '<div class="card"><h2>Indicadores de risco por aluno</h2>' +
+      '<div class="formula-box">pontuação = round(1000 × Σ(peso_i × evidência_i) / Σ(peso_i))\n— baixo ≤ ' + cfg.riskThresholds.lowMax + ', moderado ≤ ' + cfg.riskThresholds.moderateMax + ', elevado acima.\n— Limites provisórios para experimentação.</div>' + details + '</div>';
+  }
+
+  function renderComparison() {
+    const pairStats = [];
+    for (let i = 0; i < STUDENT_IDS.length; i++) {
+      for (let j = i + 1; j < STUDENT_IDS.length; j++) {
+        const a = state.students[STUDENT_IDS[i]].exam.answers;
+        const b = state.students[STUDENT_IDS[j]].exam.answers;
+        const common = Object.keys(a).map(Number).filter(function(q) { return b[q] !== undefined; });
+        let matches = 0; common.forEach(function(q) { if (a[q] === b[q]) matches++; });
+        pairStats.push({ p1: STUDENT_NAMES[STUDENT_IDS[i]], p2: STUDENT_NAMES[STUDENT_IDS[j]], sample: common.length, matches: matches, rate: common.length > 0 ? matches / common.length : null });
+      }
+    }
+    const completedCount = STUDENT_IDS.filter(function(id) { return state.students[id].exam.status === 'completed'; }).length;
+    const notes = [];
+    if (completedCount === 0) notes.push('<p class="muted">Nenhuma prova concluída.</p>');
+    else if (completedCount === 1) notes.push('<p class="muted">Apenas uma prova concluída.</p>');
+    const questionRows = QUESTIONS.map(function(q, i) {
+      const answers = STUDENT_IDS.map(function(id) { const a = state.students[id].exam.answers[i]; return a !== undefined ? ['A', 'B', 'C', 'D'][a] : '—'; });
+      const defined = answers.filter(function(a) { return a !== '—'; });
+      let info = '—';
+      if (defined.length >= 2) { const uniq = new Set(defined); info = uniq.size === 1 ? (defined.length === 3 ? 'Todos coincidem' : 'Coincidem') : 'Divergem'; }
+      return '<tr><td>' + (i + 1) + '</td>' + answers.map(function(a) { return '<td>' + a + '</td>'; }).join('') + '<td>' + info + '</td></tr>';
+    }).join('');
+    const pairRows = pairStats.map(function(s) { return '<tr><td>' + s.p1 + ' × ' + s.p2 + '</td><td>' + s.sample + '</td><td>' + s.matches + '</td><td>' + (s.rate === null ? '<em>sem amostra</em>' : Math.round(s.rate * 100) + '%') + '</td></tr>'; }).join('');
+    return '<div class="card"><h2>Comparação</h2>' + notes.join('') +
+      '<h3>Respostas</h3><div class="table-wrap"><table><thead><tr><th>#</th>' + STUDENT_IDS.map(function(id) { return '<th>' + STUDENT_NAMES[id] + '</th>'; }).join('') + '<th>Comparação</th></tr></thead><tbody>' + questionRows + '</tbody></table></div>' +
+      '<h3 style="margin-top:16px;">Semelhança entre pares</h3><div class="table-wrap"><table><thead><tr><th>Par</th><th>Em comum</th><th>Coincidências</th><th>Taxa</th></tr></thead><tbody>' + pairRows + '</tbody></table></div></div>';
+  }
+
+  function renderConfig() {
+    const cfg = state.config;
+    const defs = [['similarity', 'Semelhança'], ['temporal', 'Anomalias temporais'], ['focus', 'Foco/visibilidade'], ['copy', 'Copiar/colar'], ['behavior', 'Padrões comportamentais']];
+    return '<div class="card"><h2>Configuração dos critérios</h2><p class="muted">Parâmetros provisórios.</p>' +
+      '<form id="configForm"><div class="grid cols-2">' +
+        defs.map(function(p) {
+          const k = p[0];
+          return '<label class="inline"><input type="checkbox" name="enabled_' + k + '"' + (cfg.enabled[k] ? ' checked' : '') + '> ' + p[1] + ' <input type="number" name="weight_' + k + '" min="0" max="100" step="1" value="' + cfg.weights[k] + '"></label>';
+        }).join('') + '</div>' +
+      '<div class="grid cols-2" style="margin-top:12px;">' +
+        '<label class="inline">Rapidez (s) <input type="number" name="speedLimitSec" min="0" max="600" value="' + cfg.speedLimitSec + '"></label>' +
+        '<label class="inline">Foco p/ revisão <input type="number" name="focusReviewCount" min="1" max="100" value="' + cfg.focusReviewCount + '"></label>' +
+        '<label class="inline">Cópia p/ revisão <input type="number" name="copyReviewCount" min="1" max="100" value="' + cfg.copyReviewCount + '"></label>' +
+        '<label class="inline">Baixo ≤ <input type="number" name="lowMax" min="0" max="999" value="' + cfg.riskThresholds.lowMax + '"></label>' +
+        '<label class="inline">Moderado ≤ <input type="number" name="moderateMax" min="1" max="999" value="' + cfg.riskThresholds.moderateMax + '"></label>' +
+      '</div>' +
+      '<div class="row" style="margin-top:12px;"><button type="submit" class="primary">Salvar</button>' +
+        '<button type="button" class="ghost" id="btnResetConfig">Restaurar padrões</button></div></form></div>';
+  }
+
+  function renderAdmin() {
+    return '<div class="card"><h2>Administração</h2>' +
+      '<div class="row" style="margin-bottom:12px;">' +
+        '<button class="primary" id="btnRefresh">Atualizar</button>' +
+        '<button class="secondary" id="btnExportJson">JSON</button>' +
+        '<button class="secondary" id="btnExportCsv">CSV</button>' +
+        '<button class="secondary" id="btnExportHtml">HTML</button></div>' +
+      '<div class="row" style="margin-bottom:12px;">' +
+        '<label class="inline">Aluno <select id="resetStudentSelect">' + STUDENT_IDS.map(function(id) { return '<option value="' + id + '">' + STUDENT_NAMES[id] + '</option>'; }).join('') + '</select></label>' +
+        '<button class="ghost" id="btnResetStudent">Reiniciar aluno</button>' +
+        '<button class="ghost" id="btnResetAll">Reiniciar todos</button>' +
+        '<button class="danger" id="btnClearAll">Limpar sessão</button></div>' +
+      '<div class="notice danger">Ações destrutivas exigem confirmação.</div></div>';
+  }
+
+  // ============================ BIND CLOUD ============================
+  function bindCloudSetup() {
+    const btnConnect = document.getElementById('btnCloudConnect');
+    if (btnConnect) btnConnect.addEventListener('click', function() {
+      const inp = document.getElementById('cloudUrlInput');
+      const url = inp ? inp.value.trim() : '';
+      if (!url) { toast('Informe a URL do Firebase.', 'error'); return; }
+      state.config.cloudUrl = url;
+      saveState();
+      setupCloudSync(url, state.currentProfile || 'observer');
+      toast('Conectando…', 'success');
+      render();
+    });
+    const btnDisc = document.getElementById('btnCloudDisconnect');
+    if (btnDisc) btnDisc.addEventListener('click', function() {
+      if (!confirm('Desconectar do Firebase e voltar ao modo local?')) return;
+      disableCloudSync();
+      render();
+    });
+    const btnTest = document.getElementById('btnCloudTest');
+    if (btnTest) btnTest.addEventListener('click', function() {
+      const inp = document.getElementById('cloudUrlInput');
+      const url = inp ? inp.value.trim() : '';
+      if (!url) { toast('Informe a URL.', 'error'); return; }
+      const base = normalizeFirebaseUrl(url);
+      fetch(base + '.json')
+        .then(function(r) {
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.json();
+        })
+        .then(function() { toast('✅ Conexão OK. Firebase acessível.', 'success'); })
+        .catch(function(e) { toast('❌ Falha: ' + e.message + '. Verifique URL e regras.', 'error'); });
+    });
+    document.querySelectorAll('[data-copy-link]').forEach(function(b) {
+      b.addEventListener('click', function() {
+        const link = b.getAttribute('data-copy-link');
+        if (navigator.clipboard) navigator.clipboard.writeText(link).then(function() { toast('Link copiado.', 'success'); }, function() { toast('Não foi possível copiar.', 'error'); });
+        else toast('Copie manualmente: ' + link, 'info');
+      });
+    });
+  }
+
+  // ============================ BIND OBSERVADOR ============================
+  function bindObserver() {
+    bindCloudSetup();
+    const map = { filterStudent: 'student', filterCategory: 'category', filterLevel: 'level', filterFrom: 'from', filterTo: 'to', filterOrder: 'order' };
+    Object.keys(map).forEach(function(id) {
+      const el = document.getElementById(id); if (!el) return;
+      el.addEventListener('change', function() { observerFilters[map[id]] = el.value; render(); });
+    });
+    const cf = document.getElementById('configForm');
+    if (cf) cf.addEventListener('submit', function(ev) {
+      ev.preventDefault();
+      const fd = new FormData(cf);
+      const keys = ['similarity', 'temporal', 'focus', 'copy', 'behavior'];
+      const nw = {}, ne = {};
+      for (let i = 0; i < keys.length; i++) {
+        const k = keys[i];
+        const w = parseInt(fd.get('weight_' + k), 10);
+        if (isNaN(w) || w < 0 || w > 100) { toast('Peso inválido para ' + k, 'error'); return; }
+        nw[k] = w; ne[k] = fd.get('enabled_' + k) === 'on';
+      }
+      const speed = parseInt(fd.get('speedLimitSec'), 10);
+      const foco = parseInt(fd.get('focusReviewCount'), 10);
+      const copia = parseInt(fd.get('copyReviewCount'), 10);
+      const low = parseInt(fd.get('lowMax'), 10);
+      const mod = parseInt(fd.get('moderateMax'), 10);
+      if (isNaN(speed) || speed < 0 || speed > 600) { toast('Rapidez inválida.', 'error'); return; }
+      if (isNaN(foco) || foco < 1) { toast('Foco inválido.', 'error'); return; }
+      if (isNaN(copia) || copia < 1) { toast('Cópia inválida.', 'error'); return; }
+      if (isNaN(low) || isNaN(mod) || low < 0 || mod <= low || mod > 999) { toast('Limites inválidos.', 'error'); return; }
+      state.config.weights = nw; state.config.enabled = ne;
+      state.config.speedLimitSec = speed; state.config.focusReviewCount = foco; state.config.copyReviewCount = copia;
+      state.config.riskThresholds.lowMax = low; state.config.riskThresholds.moderateMax = mod;
+      logEvent('sistema', 'admin', 'Config atualizada.', 'info');
+      toast('Config salva.', 'success'); render();
+    });
+    const rc = document.getElementById('btnResetConfig');
+    if (rc) rc.addEventListener('click', function() {
+      if (!confirm('Restaurar configurações padrão?')) return;
+      state.config = Object.assign(defaultConfig(), { cloudUrl: state.config.cloudUrl });
+      logEvent('sistema', 'admin', 'Config restaurada.', 'info');
+      render();
+    });
+    const br = document.getElementById('btnRefresh'); if (br) br.addEventListener('click', function() { syncFromStorage(); render(); toast('Atualizado.', 'success'); });
+    const bj = document.getElementById('btnExportJson'); if (bj) bj.addEventListener('click', exportJson);
+    const bc = document.getElementById('btnExportCsv'); if (bc) bc.addEventListener('click', exportCsv);
+    const bh = document.getElementById('btnExportHtml'); if (bh) bh.addEventListener('click', exportHtmlReport);
+    const rs = document.getElementById('btnResetStudent'); if (rs) rs.addEventListener('click', function() {
+      const sel = document.getElementById('resetStudentSelect'); if (!sel) return;
+      if (!confirm('Reiniciar prova de ' + STUDENT_NAMES[sel.value] + '?')) return;
+      resetStudent(sel.value); toast('Reiniciado.', 'success');
+    });
+    const ra = document.getElementById('btnResetAll'); if (ra) ra.addEventListener('click', function() {
+      if (!confirm('Reiniciar todas as provas?')) return;
+      STUDENT_IDS.forEach(function(id) { resetStudent(id); });
+      toast('Todas reiniciadas.', 'success');
+    });
+    const cl = document.getElementById('btnClearAll'); if (cl) cl.addEventListener('click', function() {
+      if (!confirm('Limpar toda a sessão? Dados locais serão perdidos.')) return;
+      try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+      disableCloudSync();
+      state = defaultState();
+      observerFilters = { student: 'all', category: 'all', level: 'all', from: '', to: '', order: 'desc' };
+      saveState(); toast('Sessão limpa.', 'success'); render();
+    });
+  }
+
+  // ============================ EXPORTAÇÕES ============================
+  function csvEscape(v) { const s = String(v == null ? '' : v); return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
+  function exportJson() {
+    try {
+      const data = { exportedAt: new Date().toISOString(), app: 'SALA_INTEGRA', config: state.config, students: {}, systemEvents: state.systemEvents };
+      STUDENT_IDS.forEach(function(id) {
+        const r = computeRisk(id);
+        data.students[id] = { exam: state.students[id].exam, events: state.students[id].events, risk: { score: r.score, classification: r.classification, criteria: r.criteria } };
+      });
+      downloadBlob(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }), 'sala_integra_' + stamp() + '.json');
+      toast('JSON exportado.', 'success');
+    } catch (e) { toast('Falha: ' + e.message, 'error'); }
+  }
+  function exportCsv() {
+    try {
+      const evs = allEvents().sort(function(a, b) { return a.at - b.at; });
+      const header = ['timestamp_iso', 'aluno', 'categoria', 'relevancia', 'descricao'];
+      const rows = evs.map(function(e) { return [new Date(e.at).toISOString(), e.student === 'sistema' ? 'Sistema' : (STUDENT_NAMES[e.student] || e.student), e.category, LEVEL_NAMES[e.level] || e.level, e.description]; });
+      const csv = [header].concat(rows).map(function(r) { return r.map(csvEscape).join(','); }).join('\r\n');
+      downloadBlob(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' }), 'sala_integra_eventos_' + stamp() + '.csv');
+      toast('CSV exportado.', 'success');
+    } catch (e) { toast('Falha: ' + e.message, 'error'); }
+  }
+  function exportHtmlReport() {
+    try {
+      const summaryRows = STUDENT_IDS.map(function(id) {
+        const st = state.students[id]; const r = computeRisk(id);
+        return '<tr><td>' + STUDENT_NAMES[id] + '</td><td>' + STATUS_NAMES[st.exam.status] + '</td><td>' + (st.exam.status === 'completed' ? st.exam.grade + '/10' : '—') + '</td><td>' + st.events.length + '</td><td>' + (r.score === null ? 'sem dados' : r.score + ' (' + CLASS_NAMES[r.classification] + ')') + '</td></tr>';
+      }).join('');
+      const eventsHtml = allEvents().sort(function(a, b) { return b.at - a.at; }).map(function(e) {
+        const who = e.student === 'sistema' ? 'Sistema' : (STUDENT_NAMES[e.student] || e.student);
+        return '<tr><td>' + formatDateTime(e.at) + '</td><td>' + escapeHtml(who) + '</td><td>' + escapeHtml(e.category) + '</td><td>' + escapeHtml(LEVEL_NAMES[e.level] || e.level) + '</td><td>' + escapeHtml(e.description) + '</td></tr>';
+      }).join('');
+      const html = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>SALA ÍNTEGRA</title><style>body{font-family:system-ui;max-width:960px;margin:20px auto;padding:0 20px;color:#1f2937}table{width:100%;border-collapse:collapse;font-size:13px}th,td{border-bottom:1px solid #e5e7eb;padding:6px;text-align:left}th{background:#f9fafb}.notice{background:#fef3c7;padding:10px;border-radius:6px}</style></head><body>' +
+        '<h1>SALA ÍNTEGRA — Relatório</h1><p>' + formatDateTime(Date.now()) + '</p>' +
+        '<div class="notice">Indicadores experimentais. Não constituem prova de irregularidade.</div>' +
+        '<h2>Resumo</h2><table><thead><tr><th>Aluno</th><th>Estado</th><th>Nota</th><th>Eventos</th><th>Risco</th></tr></thead><tbody>' + summaryRows + '</tbody></table>' +
+        '<h2>Eventos</h2><table><thead><tr><th>Horário</th><th>Aluno</th><th>Categoria</th><th>Nível</th><th>Descrição</th></tr></thead><tbody>' + eventsHtml + '</tbody></table>' +
+        '</body></html>';
+      downloadBlob(new Blob([html], { type: 'text/html;charset=utf-8' }), 'sala_integra_relatorio_' + stamp() + '.html');
+      toast('HTML exportado.', 'success');
+    } catch (e) { toast('Falha: ' + e.message, 'error'); }
+  }
+
+  // ============================ LISTENERS GLOBAIS ============================
+  function currentStudentInProgress() {
+    const p = state.currentProfile;
+    if (!p || STUDENT_IDS.indexOf(p) === -1) return null;
+    if (state.students[p].exam.status !== 'in_progress') return null;
+    return p;
+  }
+  function setupGlobalListeners() {
+    window.addEventListener('blur', function() { const p = currentStudentInProgress(); if (p) logEvent(p, 'foco', 'Perda de foco.', 'atencao'); });
+    window.addEventListener('focus', function() { const p = currentStudentInProgress(); if (p) logEvent(p, 'foco', 'Foco recuperado.', 'info'); });
+    document.addEventListener('visibilitychange', function() {
+      const p = currentStudentInProgress(); if (!p) return;
+      logEvent(p, 'foco', document.hidden ? 'Página oculta.' : 'Página visível.', document.hidden ? 'atencao' : 'info');
+    });
+    document.addEventListener('copy', function() { const p = currentStudentInProgress(); if (p) logEvent(p, 'copia', 'Evento copy.', 'atencao'); });
+    document.addEventListener('paste', function() { const p = currentStudentInProgress(); if (p) logEvent(p, 'copia', 'Evento paste.', 'atencao'); });
+    document.addEventListener('cut', function() { const p = currentStudentInProgress(); if (p) logEvent(p, 'copia', 'Evento cut.', 'atencao'); });
+    document.addEventListener('keydown', function(e) {
+      const p = currentStudentInProgress(); if (!p) return;
+      const k = (e.key || '').toLowerCase();
+      if ((e.ctrlKey || e.metaKey) && ['c','v','x','a','p'].indexOf(k) !== -1) {
+        logEvent(p, 'copia', 'Atalho ' + (e.ctrlKey ? 'Ctrl' : 'Cmd') + '+' + k.toUpperCase() + '.', 'atencao');
+      }
+    });
+    window.addEventListener('storage', function(e) {
+      if (e.key !== STORAGE_KEY) return;
+      if (state.currentProfile !== 'observer') return;
+      if (isTypingInForm()) return;
+      if (syncFromStorage()) render();
+    });
+  }
+
+  // ============================ RENDER PRINCIPAL ============================
+  function render() {
+    const app = document.getElementById('app'); if (!app) return;
+    const scrollY = window.scrollY;
+    const badge = document.getElementById('profileBadge');
+    badge.textContent = state.currentProfile ? ('Perfil: ' + (STUDENT_NAMES[state.currentProfile] || state.currentProfile)) : 'Nenhum perfil';
+    updateSyncBadge();
+    if (!state.currentProfile) {
+      app.innerHTML = renderProfileSelect();
+      document.querySelectorAll('[data-profile]').forEach(function(btn) {
+        btn.addEventListener('click', function() { switchProfile(btn.dataset.profile); });
+      });
+      bindCloudSetup();
+    } else if (state.currentProfile === 'observer') {
+      app.innerHTML = renderObserver();
+      bindObserver();
+    } else {
+      app.innerHTML = renderStudent(state.currentProfile);
+      bindStudent(state.currentProfile);
+    }
+    window.scrollTo(0, scrollY);
+  }
+
+  // ============================ INICIALIZAÇÃO ============================
+  function parseUrlParams() {
+    const params = new URLSearchParams(location.search);
+    const cloudUrl = params.get('cloud');
+    const role = params.get('role');
+    let changed = false;
+    if (cloudUrl) {
+      state.config.cloudUrl = decodeURIComponent(cloudUrl);
+      changed = true;
+    }
+    if (role && (STUDENT_IDS.indexOf(role) !== -1 || role === 'observer')) {
+      state.currentProfile = role;
+      changed = true;
+    }
+    if (changed) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {} }
+    return changed;
+  }
+
+  function init() {
+    state = loadState() || defaultState();
+    parseUrlParams();
+    setupGlobalListeners();
+    if (state.currentProfile && STUDENT_IDS.indexOf(state.currentProfile) !== -1) {
+      const ex = state.students[state.currentProfile].exam;
+      if (ex.status === 'in_progress' && !ex.questionEntryAt) ex.questionEntryAt = Date.now();
+    }
+    if (state.config.cloudUrl) {
+      setupCloudSync(state.config.cloudUrl, state.currentProfile);
+    }
+    document.getElementById('btnHome').addEventListener('click', function() {
+      const p = state.currentProfile;
+      if (p && STUDENT_IDS.indexOf(p) !== -1 && state.students[p].exam.status === 'in_progress') {
+        if (!confirm('Sair da prova em andamento?')) return;
+      }
+      switchProfile(null);
+    });
+    window.addEventListener('beforeunload', function() {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+    });
+    render();
+  }
+  init();
+})();
+</script>
+</body>
+</html>
